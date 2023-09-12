@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 
 import {FreeRiderBuyer} from "../../../src/Contracts/free-rider/FreeRiderBuyer.sol";
 import {FreeRiderNFTMarketplace} from "../../../src/Contracts/free-rider/FreeRiderNFTMarketplace.sol";
+import {Attacker} from "../../../src/Contracts/free-rider/Attacker.sol";
 import {IUniswapV2Router02, IUniswapV2Factory, IUniswapV2Pair} from "../../../src/Contracts/free-rider/Interfaces.sol";
 import {DamnValuableNFT} from "../../../src/Contracts/DamnValuableNFT.sol";
 import {DamnValuableToken} from "../../../src/Contracts/DamnValuableToken.sol";
@@ -32,6 +33,7 @@ contract FreeRider is Test {
     IUniswapV2Factory internal uniswapV2Factory;
     IUniswapV2Router02 internal uniswapV2Router;
     WETH9 internal weth;
+    Attacker internal attackerContract;
     address payable internal buyer;
     address payable internal attacker;
     address payable internal deployer;
@@ -135,6 +137,9 @@ contract FreeRider is Test {
          * EXPLOIT START *
          */
         vm.startPrank(attacker, attacker);
+        attackerContract =
+            new Attacker(uniswapV2Pair, freeRiderNFTMarketplace, AMOUNT_OF_NFTS, NFT_PRICE, address(freeRiderBuyer));
+        attackerContract.exploit();
 
         vm.stopPrank();
         /**

